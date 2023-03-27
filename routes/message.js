@@ -1291,7 +1291,7 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
   }
   
   
-  
+  var reseller_code = "301150232"; // 2023-02-08 문자 발송 시 재판매사 식별코드를 담아서 전송
   
   // 효성의 API 코드
   // const api_code = 100;
@@ -1339,12 +1339,12 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
             INSERT INTO \`munjamoa\`.\`Msg_Tran\`
           
             (\`Phone_No\`, \`Callback_No\`, \`Message\`, 
-             \`Send_Time\`, \`Save_Time\`, \`Msg_Type\`, \`created_at\`,
+             \`Send_Time\`, \`Save_Time\`, \`Msg_Type\`, \`Reseller_Code\`, \`created_at\`,
              \`munja_token\`, \`user_key\`, \`api_key\`, \`at_signup_code\`,
              \`etc1\`, \`etc2\`, \`company_seq\`)VALUES
             
             (?, ?, ?, 
-             ?, ?, ?, ?,
+             ?, ?, ?, ?, ?,
              ?, ?, ?, ?,
              ?, ?, ?);
           `;
@@ -1355,6 +1355,7 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
           send_munja_query_sms_values.push(real_send_time);
           send_munja_query_sms_values.push(real_send_time);
           send_munja_query_sms_values.push(Msg_Type);
+          send_munja_query_sms_values.push(reseller_code);
           send_munja_query_sms_values.push(getCurrentMomentDatetime());
           
           send_munja_query_sms_values.push(new_munja_token);
@@ -1387,12 +1388,12 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
             INSERT INTO \`munjamoa\`.\`Msg_Tran\`
           
             (\`Phone_No\`, \`Callback_No\`, \`Subject\`, \`Message\`, 
-             \`Send_Time\`, \`Save_Time\`, \`Msg_Type\`, \`created_at\`,
+             \`Send_Time\`, \`Save_Time\`, \`Msg_Type\`, \`Reseller_Code\`, \`created_at\`,
              \`munja_token\`, \`user_key\`, \`api_key\`, \`at_signup_code\`,
              \`etc1\`, \`etc2\`, \`company_seq\`)VALUES
             
             (?, ?, ?, ?, 
-             ?, ?, ?, ?,
+             ?, ?, ?, ?, ?,
              ?, ?, ?, ?,
              ?, ?, ?);
           `;
@@ -1404,6 +1405,7 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
           send_munja_query_lms_values.push(real_send_time);
           send_munja_query_lms_values.push(real_send_time);
           send_munja_query_lms_values.push(Msg_Type);
+          send_munja_query_lms_values.push(reseller_code);
           send_munja_query_lms_values.push(getCurrentMomentDatetime());
           
           send_munja_query_lms_values.push(new_munja_token);
@@ -1437,13 +1439,13 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
             
             (\`Phone_No\`, \`Callback_No\`, \`Subject\`, \`Message\`, 
             \`File_Count\`, \`File_Type1\`, \`File_Name1\`, \`api_key\`,
-            \`Send_Time\`, \`Save_Time\`, \`Msg_Type\`, \`created_at\`,
+            \`Send_Time\`, \`Save_Time\`, \`Msg_Type\`, \`Reseller_Code\`, \`created_at\`,
             \`munja_token\`, \`user_key\`, \`at_signup_code\`, \`company_seq\`,
             \`etc1\`, \`etc2\`)VALUES
             
             (?, ?, ?, ?,
              ?, ?, ?, ?,
-             ?, ?, ?, ?,
+             ?, ?, ?, ?, ?,
              ?, ?, ?, ?,
              ?, ?);
           `;
@@ -1461,6 +1463,7 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
           send_munja_query_mms_values.push(real_send_time);
           send_munja_query_mms_values.push(real_send_time);
           send_munja_query_mms_values.push(Msg_Type);
+          send_munja_query_mms_values.push(reseller_code);
           send_munja_query_mms_values.push(getCurrentMomentDatetime());
           
           send_munja_query_mms_values.push(new_munja_token);
