@@ -60,6 +60,8 @@ var kakaoAtalkRouter = require('./routes/kakaoAtalk');
 // var usersRouter = require('./routes/users');
 
 
+// 외부 알림톡 라우터
+var outerAlarmTalkRouter = require('./routes/outerAlarmTalk');
 
 
 
@@ -253,6 +255,8 @@ app.use('/message2', message2Router);
 app.use('/kakaoAtalk', kakaoAtalkRouter);
 // app.use('/users', usersRouter);
 
+// 외부 알림톡 API
+app.use('/outerAlarmTalk', outerAlarmTalkRouter);
 
 
 
