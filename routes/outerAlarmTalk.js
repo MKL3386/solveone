@@ -64,6 +64,8 @@ router.post('/:alarmtalk_id/sendMsg', function(req, res, next) {
 
 
 
+  // company_initial 과 alarmtalk_id 혼선 
+  // outerAlarmTalk 에서는 company_initial을 alarmtalk_id로 씀
 
   // 해당 이니셜(알림톡 ID)이 company_list에 있는지 체크
   const check_initial_exist = connection.query(`
@@ -671,104 +673,99 @@ router.post('/:alarmtalk_id/sendMsg', function(req, res, next) {
   // 2. templateParam에 들어있는 값을 재조립 해야함.
 
 
-  // var phoneNo = "01066599561";
 
-  // var template_param_data = "{\"가맹점명\":\"강남점\",\"대기번호\":\"0001\",\"상품명\":\"연어 포케\",\"건수\":\"2\",\"총금액\":\"15000\"}";
-  // var template_param_data = "{\"업체명\":\"에드원 당산점\",\"주문번호\":\"0001\",\"전화번호\":\"01082038770\"}";
+  // console.log(" ");
+  // console.log(" ");
+  // console.log(" ");
+  // console.log(" ");
 
 
 
-  var template_param_value = templateParam.replace(/\"|{|}/gi, "");
 
+  console.log("templateParam => ",templateParam);
+  
+
+  var template_param_value = templateParam.replace(/","|":"/gi, "|"); 
   // console.log("template_param_value => ",template_param_value);
 
-  var template_param_data = template_param_value.replace(/:|,/gi, "|");
-
+  var template_param_data = template_param_value.replace(/{|}|"/gi, "");
   // console.log("template_param_data => ",template_param_data);
 
-
   var template_data = "수신번호|" + phoneNo[0] + "|" + template_param_data;
+  // var template_data = "수신번호|01066599561|가맹점명|엔프타 당산점|결제금액|30,000|결제포인트|10,000P|적립예정포인트|300P|현재포인트|1,300P|문의전화번호|010-1234-1234";
+  console.log("template_data => ",template_data);
 
-  // console.log("template_data => ",template_data);
 
+
+
+  // res.json({result:"Test Success", code:10000});
+  // return;
 
   let all_getter_person_list = [];
   let getter_person_list = [];
   let bad_person_list = [];
-  const phone_no_array = template_data.split(','); // ex) [0] => 수신번호|01022224444|이름|홍길동|발송날짜|2019년 09월 23일 오후 3시 30분, [1] => 수신번호|01022224444|이름|소길동|발송날짜|2019년 09월 26일 오후 1시 30분
 
 
-  if (phone_no_array.length > 1000) {
-    // 수신자 수가 1000명을 넘은 경우
-    res.json({result:"fail", code:240421});
-    return;
-  }
 
-  for (let i=0; i<phone_no_array.length; i++) {
-    let item = phone_no_array[i]; // ex) 수신번호|01022224444|이름|홍길동|발송날짜|2019년 09월 23일 오후 3시 30분
-    let item_split = item.split('수신번호|');
-    if (item_split.length != 2) {
-      continue;
-    }
-    
-    let item_split2 = item_split[1].split('|');
-    let getter_phone = item_split2[0].replace(/-/gi, ''); // ex) 01012341234
-    
-    
-    all_getter_person_list.push({
+  let item_split = template_data.split('수신번호|'); // ex) 수신번호|01022224444|이름|홍길동|발송날짜|2019년 09월 23일 오후 3시 30분
+
+  
+  let item_split2 = item_split[1].split('|');
+  let getter_phone = item_split2[0].replace(/-/gi, ''); // ex) 01012341234
+  
+
+
+  all_getter_person_list.push({
+    getter_phone: getter_phone,
+    getter_add_info_text: template_data
+  });
+
+
+
+  
+  if (!check_regular_express(getter_phone, 'number_only')) {
+    // 수신번호가 숫자로만 이루어진게 아닌 경우 막기
+    bad_person_list.push({
       getter_phone: getter_phone,
-      getter_add_info_text: item
+      getter_add_info_text: template_data
     });
+  }
+  
+  if (getter_phone.length > 12) {
+    // - 표시를 제거한 순수 숫자만 있는 휴대폰 번호 길이가 12자보다 크면 막기
+    bad_person_list.push({
+      getter_phone: getter_phone,
+      getter_add_info_text: template_data
+    });
+  }
+  
 
-
-
-    
-    if (!check_regular_express(getter_phone, 'number_only')) {
-      // 수신번호가 숫자로만 이루어진게 아닌 경우 막기
-      bad_person_list.push({
-        getter_phone: getter_phone,
-        getter_add_info_text: item
-      });
-      continue;
-    }
-    
-    if (getter_phone.length > 12) {
-      // - 표시를 제거한 순수 숫자만 있는 휴대폰 번호 길이가 12자보다 크면 막기
-      bad_person_list.push({
-        getter_phone: getter_phone,
-        getter_add_info_text: item
-      });
-      continue;
-    }
-    
-
-
-    let is_not_exist_variable_name = false;
-    for (let k=0; k<template_variable_name_list.length; k++) {
-      // 템플릿 내용에 등록된 변수값이 item에 없는 경우
-      if (!item.includes(template_variable_name_list[k])) {
-        if (!is_not_exist_variable_name) {
-          is_not_exist_variable_name = true;
-        }
+  let is_not_exist_variable_name = false;
+  for (let k=0; k<template_variable_name_list.length; k++) {
+    // 템플릿 내용에 등록된 변수값이 item에 없는 경우
+    if (!template_data.includes(template_variable_name_list[k])) {
+      if (!is_not_exist_variable_name) {
+        is_not_exist_variable_name = true;
       }
     }
-    
-    if (is_not_exist_variable_name) {
-      // 받아온 정보에 있어야할 템플릿 변수가 없는 경우
-      bad_person_list.push({
-        getter_phone: getter_phone,
-        getter_add_info_text: item
-      });
-      continue;
-    }
-
-    
-    getter_person_list.push({
-      getter_phone: getter_phone,
-      getter_add_info_text: item
-    });
-
   }
+
+  
+  if (is_not_exist_variable_name) {
+    // 받아온 정보에 있어야할 템플릿 변수가 없는 경우
+    bad_person_list.push({
+      getter_phone: getter_phone,
+      getter_add_info_text: template_data
+    });
+    // continue;
+  }
+
+
+  getter_person_list.push({
+    getter_phone: getter_phone,
+    getter_add_info_text: template_data
+  });
+
 
 
 
@@ -884,7 +881,7 @@ router.post('/:alarmtalk_id/sendMsg', function(req, res, next) {
   // TYPE 기본값 5 셋팅
   let TYPE = 5;
   // 일반 알림톡인지 이미지 알림톡인지 검증 
-  if(user_template_info.template_upload_document_path !== ""){
+  if(user_template_info.templete_upload_document_path !== ""){
     TYPE = 51;
   }
 
@@ -1152,25 +1149,25 @@ router.post('/:alarmtalk_id/sendMsg', function(req, res, next) {
 
 
 
-  console.log("user_plus_account_info.sender_key => ",user_plus_account_info.sender_key);
-  console.log("user_template_info.template_code => ",user_template_info.template_code);
-  console.log("callerNo => ",callerNo);
-  console.log("getter_person_list[i].getter_phone => ",getter_person_list);
+  // console.log("user_plus_account_info.sender_key => ",user_plus_account_info.sender_key);
+  // console.log("user_template_info.template_code => ",user_template_info.template_code);
+  // console.log("callerNo => ",callerNo);
+  // console.log("getter_person_list[i].getter_phone => ",getter_person_list);
 
-  console.log("SUBJECT => ", SUBJECT);
-  console.log("variable_apply_msg => ", MSG);
-  console.log("DATE => ", DATE);
-  console.log("TYPE => ", TYPE);
+  // console.log("SUBJECT => ", SUBJECT);
+  // console.log("variable_apply_msg => ", MSG);
+  // console.log("DATE => ", DATE);
+  // console.log("TYPE => ", TYPE);
 
-  console.log("STATUS => ", STATUS);
-  console.log("N => ", "N");
-  console.log("REPLACE_MSG => ", REPLACE_MSG);
-  console.log("BUTTON_INSERT_STRING => ", BUTTON_INSERT_STRING);
+  // console.log("STATUS => ", STATUS);
+  // console.log("N => ", "N");
+  // console.log("REPLACE_MSG => ", REPLACE_MSG);
+  // console.log("BUTTON_INSERT_STRING => ", BUTTON_INSERT_STRING);
 
-  console.log("REPLACE_TYPE => ", REPLACE_TYPE);
-  console.log("new_munja_token => ", new_munja_token);
-  console.log("best_parent_company_info.seq => ", best_parent_company_info.seq);
-  console.log("etc_json => ", etc_json);
+  // console.log("REPLACE_TYPE => ", REPLACE_TYPE);
+  // console.log("new_munja_token => ", new_munja_token);
+  // console.log("best_parent_company_info.seq => ", best_parent_company_info.seq);
+  // console.log("etc_json => ", etc_json);
 
 
 
@@ -1342,7 +1339,7 @@ router.post('/:alarmtalk_id/sendMsg', function(req, res, next) {
         will_pay_cash,
         1,
         getCurrentMomentDatetime(),
-        `api (${company_initial}) 알림톡 ${getter_person_list.length}건 발송`
+        `api (${alarmtalk_id}) 알림톡 ${getter_person_list.length}건 발송`
       ]);
       
       
