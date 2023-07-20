@@ -781,8 +781,28 @@ router.post('/:company_initial/sendMsg', function(req, res, next) {
   let all_getter_person_list = [];
   let getter_person_list = [];
   let bad_person_list = [];
-  const phone_no_array = PHONE.split(','); // ex) [0] => 수신번호|01022224444|이름|홍길동|발송날짜|2019년 09월 23일 오후 3시 30분, [1] => 수신번호|01022224444|이름|소길동|발송날짜|2019년 09월 26일 오후 1시 30분
+  const phone_no_array_2 = PHONE.split(',수신번호'); // ex) [0] => 수신번호|01022224444|이름|홍길동|발송날짜|2019년 09월 23일 오후 3시 30분, [1] => 수신번호|01022224444|이름|소길동|발송날짜|2019년 09월 26일 오후 1시 30분
+  const phone_no_array = [];
   
+  // console.log("phone_no_array_2 => ",phone_no_array_2);
+
+
+
+  for(var x = 0 ; x < phone_no_array_2.length ; x++){
+    var phone_item = phone_no_array_2[x];
+
+    if(x > 0){
+      phone_item = "수신번호" + phone_item;
+    }
+
+    // console.log("phone_item "+ x +". => ",phone_item);
+    phone_no_array.push(phone_item);
+  }
+
+  console.log("phone_no_array => ",phone_no_array);
+
+
+
   if (phone_no_array.length > 1000) {
     // 수신자 수가 1000명을 넘은 경우
     res.json({result:"fail", code:240421});
@@ -974,7 +994,7 @@ router.post('/:company_initial/sendMsg', function(req, res, next) {
   // TYPE 기본값 5 셋팅
   TYPE = 5;
   // 일반 알림톡인지 이미지 알림톡인지 검증 
-  if(user_template_info.template_upload_document_path !== ""){
+  if(user_template_info.templete_upload_document_path !== ""){
     TYPE = 51;
   }
   
@@ -1332,7 +1352,7 @@ router.post('/:company_initial/sendMsg', function(req, res, next) {
       if (REPLACE_TYPE == 'Y') {
         REPLACE_MSG = variable_apply_msg;
       } else {
-        REPLACE_MSG = '';
+        REPLACE_MSG = variable_apply_msg;
       }
       
       
