@@ -65,6 +65,8 @@ var outerAlarmTalkRouter = require('./routes/outerAlarmTalk');
 
 
 
+// 대량 문자 발송 시 안내문자 발송
+var largeMunjaGuideRouter = require('./routes/largeMunjaGuide');
 
 
 
@@ -257,6 +259,11 @@ app.use('/kakaoAtalk', kakaoAtalkRouter);
 
 // 외부 알림톡 API
 app.use('/outerAlarmTalk', outerAlarmTalkRouter);
+
+
+// 외부 알림톡 API
+app.use('/largeMunjaGuide', largeMunjaGuideRouter);
+
 
 
 

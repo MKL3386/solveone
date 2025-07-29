@@ -207,105 +207,105 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
   
   
   
-  // 해당 이니셜과 api키에 매치되는 유효한 api키가 존재하는지 DB에서 체크하기
-  const check_access_valid_result = connection.query(`
-    SELECT 
+  // // 해당 이니셜과 api키에 매치되는 유효한 api키가 존재하는지 DB에서 체크하기
+  // const check_access_valid_result = connection.query(`
+  //   SELECT 
     
-    \`akl\`.\`seq\` AS \`seq\`,
-    \`akl\`.\`api_key\` AS \`api_key\`,
-    \`akl\`.\`company_seq\` AS \`company_seq\`,
+  //   \`akl\`.\`seq\` AS \`seq\`,
+  //   \`akl\`.\`api_key\` AS \`api_key\`,
+  //   \`akl\`.\`company_seq\` AS \`company_seq\`,
     
-    \`cl\`.\`company_name\` AS \`company_name\`,
-    \`cl\`.\`company_initial\` AS \`company_initial\`,
+  //   \`cl\`.\`company_name\` AS \`company_name\`,
+  //   \`cl\`.\`company_initial\` AS \`company_initial\`,
     
-    \`akl\`.\`created_at\` AS \`created_at\`,
-    \`akl\`.\`allow_ip\` AS \`allow_ip\`,
-    \`akl\`.\`status\` AS \`status\` 
+  //   \`akl\`.\`created_at\` AS \`created_at\`,
+  //   \`akl\`.\`allow_ip\` AS \`allow_ip\`,
+  //   \`akl\`.\`status\` AS \`status\` 
     
-    FROM \`munjamoa\`.\`api_key_log\` AS \`akl\` 
+  //   FROM \`munjamoa\`.\`api_key_log\` AS \`akl\` 
     
-    LEFT JOIN \`munjamoa\`.\`company_list\` AS \`cl\` 
-    ON \`cl\`.\`seq\` = \`akl\`.\`company_seq\` 
+  //   LEFT JOIN \`munjamoa\`.\`company_list\` AS \`cl\` 
+  //   ON \`cl\`.\`seq\` = \`akl\`.\`company_seq\` 
     
-    WHERE \`akl\`.\`api_key\` = ? 
-    AND \`cl\`.\`company_initial\` = ? 
-  `, [
-    api_key,
-    company_initial
-  ]);
+  //   WHERE \`akl\`.\`api_key\` = ? 
+  //   AND \`cl\`.\`company_initial\` = ? 
+  // `, [
+  //   api_key,
+  //   company_initial
+  // ]);
   
   
-  // 결과가 없으면 막기
-  if (check_access_valid_result.length !== 1) {
-    // 유효한 API키가 아닌 경우
-    res.json({result:"fail", code:100201});
-    return;
-  }
+  // // 결과가 없으면 막기
+  // if (check_access_valid_result.length !== 1) {
+  //   // 유효한 API키가 아닌 경우
+  //   res.json({result:"fail", code:100201});
+  //   return;
+  // }
   
-  if (check_access_valid_result[0].status != 1) {
-    // 결과는 있으나 status 값이 1이 아닌 경우
-    res.json({result:"fail", code:100202});
-    return;
-  }
+  // if (check_access_valid_result[0].status != 1) {
+  //   // 결과는 있으나 status 값이 1이 아닌 경우
+  //   res.json({result:"fail", code:100202});
+  //   return;
+  // }
   
-  let allow_ip = check_access_valid_result[0].allow_ip;
-  let allow_ips = allow_ip.split(',');
+  // let allow_ip = check_access_valid_result[0].allow_ip;
+  // let allow_ips = allow_ip.split(',');
   
-  // 허용 ip 수 만큼 반복문 돌기
-  let is_allow_ip_match = false;
-  for (let i=0; i<allow_ips.length; i++) {
-    let ip = allow_ips[i]; // ex) 154.22.333.25, 180.255.231.0/24
-    let ip_split = ip.split('.');
-    let check_ip = '';
+  // // 허용 ip 수 만큼 반복문 돌기
+  // let is_allow_ip_match = false;
+  // for (let i=0; i<allow_ips.length; i++) {
+  //   let ip = allow_ips[i]; // ex) 154.22.333.25, 180.255.231.0/24
+  //   let ip_split = ip.split('.');
+  //   let check_ip = '';
 
-    if (ip == '0.0.0.0') {
-      is_allow_ip_match = true;
-      break;
-    }
+  //   if (ip == '0.0.0.0') {
+  //     is_allow_ip_match = true;
+  //     break;
+  //   }
     
-    if (ip.includes('/8')) {
-      check_ip = ip_split[0];
-      if (requestIP.getClientIp(req).includes(check_ip)) {
-        // 요청 ip가 허용 ip 규칙에 맞으면
-        is_allow_ip_match = true;
-        break;
-      }
-    } else if (ip.includes('/16')) {
-      check_ip = ip_split[0] + '.' + ip_split[1];
-      if (requestIP.getClientIp(req).includes(check_ip)) {
-        // 요청 ip가 허용 ip 규칙에 맞으면
-        is_allow_ip_match = true;
-        break;
-      }
-    } else if (ip.includes('/24')) {
-      check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2];
-      if (requestIP.getClientIp(req).includes(check_ip)) {
-        // 요청 ip가 허용 ip 규칙에 맞으면
-        is_allow_ip_match = true;
-        break;
-      }
-    } else if (ip.includes('/32')) {
-      check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3].split('/')[0];
-      if (requestIP.getClientIp(req).includes(check_ip)) {
-        // 요청 ip가 허용 ip 규칙에 맞으면
-        is_allow_ip_match = true;
-        break;
-      }
-    } else {
-      check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3];
-      if (requestIP.getClientIp(req).includes(check_ip)) {
-        // 요청 ip가 허용 ip 규칙에 맞으면
-        is_allow_ip_match = true;
-        break;
-      }
-    }
-  }
+  //   if (ip.includes('/8')) {
+  //     check_ip = ip_split[0];
+  //     if (requestIP.getClientIp(req).includes(check_ip)) {
+  //       // 요청 ip가 허용 ip 규칙에 맞으면
+  //       is_allow_ip_match = true;
+  //       break;
+  //     }
+  //   } else if (ip.includes('/16')) {
+  //     check_ip = ip_split[0] + '.' + ip_split[1];
+  //     if (requestIP.getClientIp(req).includes(check_ip)) {
+  //       // 요청 ip가 허용 ip 규칙에 맞으면
+  //       is_allow_ip_match = true;
+  //       break;
+  //     }
+  //   } else if (ip.includes('/24')) {
+  //     check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2];
+  //     if (requestIP.getClientIp(req).includes(check_ip)) {
+  //       // 요청 ip가 허용 ip 규칙에 맞으면
+  //       is_allow_ip_match = true;
+  //       break;
+  //     }
+  //   } else if (ip.includes('/32')) {
+  //     check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3].split('/')[0];
+  //     if (requestIP.getClientIp(req).includes(check_ip)) {
+  //       // 요청 ip가 허용 ip 규칙에 맞으면
+  //       is_allow_ip_match = true;
+  //       break;
+  //     }
+  //   } else {
+  //     check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3];
+  //     if (requestIP.getClientIp(req).includes(check_ip)) {
+  //       // 요청 ip가 허용 ip 규칙에 맞으면
+  //       is_allow_ip_match = true;
+  //       break;
+  //     }
+  //   }
+  // }
   
-  // 요청 ip 주소가 허용 ip 주소에 포함되어 있지 않은 경우
-  if (!is_allow_ip_match) {
-    res.json({result:"fail", code:100231});
-    return;
-  }
+  // // 요청 ip 주소가 허용 ip 주소에 포함되어 있지 않은 경우
+  // if (!is_allow_ip_match) {
+  //   res.json({result:"fail", code:100231});
+  //   return;
+  // }
   
   
   
@@ -1782,6 +1782,190 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
     }
     
     const current_cash = check_member_cash_result[0].cash;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // 문자가 50통 이상 발송되는 경우, 해당 발신번호 소유자에게 대량문자 발송 안내 문자 발송
+    
+    // 기본 조건
+    // 1. 휴대전화번호로 발송 시 에만 해당
+    // 2. 50건 이상
+    // 3. 1일 1회 제한 날짜 체크
+
+
+    
+    // 휴대전화 구분 
+    var callback_no_phone = callback_no.substr(0, 3);
+
+
+    // 1. 휴대전화번호로 발송 시 에만 해당
+    if(callback_no_phone == '010'){
+
+
+
+      console.log("API deny_clear_getter_person_list.length 실 수신자 수 => ",deny_clear_getter_person_list.length);
+
+
+      // 2. 50건 이상
+      if(deny_clear_getter_person_list.length >= 50){
+
+
+        var callback_no_data;
+        // 하이픈 존재 여부 확인
+
+        // 하이픈 존재 한다면
+        if(callback_no.includes('-') == true){
+          callback_no_data = callback_no;
+        
+        // 하이픈 존재하지 않는다면 삽입
+        }else{
+
+          // 하이픈 정규식
+
+          // 8자리면 4자리 후 하이픈 
+          if(callback_no.length == 8){
+
+            callback_no_data = callback_no.substring(0, 4) + '-' + callback_no.substring(4);
+
+          // 그 외
+          }else{
+            callback_no_data = callback_no.replace(/^(02|.{3})(.+)(.{4})$/, `$1-$2-$3`);
+          }
+
+
+        }
+
+
+        console.log("callback_no_data => ",callback_no_data);
+
+        // REGEXP_REPLACE( ? , '(02|.{3})(.+)(.{4})', '\\1-\\2-\\3')
+        // 유저정보에서 대량문자 발송안내 flag 체크 
+        // 하이픈 있는 발신번호 넣어야함.
+        let large_munja_guide_result = connection.query(`
+          SELECT 
+
+          DATE_FORMAT(\`large_munja_guide_check\`, '%Y-%m-%d') AS \`large_munja_guide_check\`
+
+          FROM \`member_send_number_log\`
+
+          WHERE \`user_key\` = ? 
+
+          AND \`send_number\` = ?
+          AND \`status\` = ? 
+        `, [
+          user_key,
+
+          callback_no_data,
+          1
+        ]);
+
+        console.log("large_munja_guide_result => ",large_munja_guide_result);
+
+
+        var guide_check = large_munja_guide_result[0].large_munja_guide_check;
+
+        console.log("guide_check 대량문자 Flag 값 체크 YYYY-MM-DD => ",guide_check);
+        console.log("현재 날짜 => ",moment().format('YYYY-MM-DD'));
+
+
+        // 3. 1일 1회 제한 날짜 체크
+        // 해당 값이 비어 있거나(최초), 체크한 날짜가 오늘 날짜보다 작으면 안내문자 발송
+        if(guide_check == null || guide_check == undefined || guide_check < moment().format('YYYY-MM-DD')){
+
+          console.log("API 대량문자 발송 안내 진입");
+          console.log("send_type => ",send_type);
+          console.log("callback_no => ",callback_no);
+
+          // 대량문자 발송 안내 문자 API 조회
+          const large_munja_guide_result = await axios({
+            url: 'https://' + req.headers.host + "/largeMunjaGuide/sendMsg",
+            method: "post", // POST method
+            headers: { 
+              "Content-Type": "application/json"  // "Content-Type": "application/json"  
+            }, 
+            data: {
+              api_key: "WXsUVzKzT9dKKC517530741702428FfJU9qf6YUR", // api 키 ('' 고정)
+
+              large_munja_user_key: user_key,
+        
+              m_user_id: "addone", // 문자모아 관리자 아이디 (이 계정 정보로 문자가 발송됨, 고객에게 대량발송 안내문자를 보내고자 하는 문자모아 계정 아이디)
+
+              send_type_guide: send_type, // 즉시발송 , 예약발송
+
+              phone_no: callback_no_data, // 50통 이상 발송하는 주체 
+
+              callback_no: "1644-6639", // 발신번호 (문자모아에 등록된 관리자 발신번호 이어야 함)
+            }
+          });
+
+          var result_data = large_munja_guide_result.data; // 응답 값
+
+
+          console.log("대량문자 안내문자 발송 결과 => ",result_data);
+
+
+          if(result_data.result == 'success'){
+
+            console.log("대량문자 발송 관련 안내문자 발송 성공");
+
+          }else{
+
+            console.log("대량문자 발송 관련 안내문자 발송 실패");
+
+          }
+
+
+        }else{
+
+          console.log("대량문자 발송 안내 진입 X");
+
+        }
+
+
+      }
+
+
+
+
+
+    }
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
     
     
     
