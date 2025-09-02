@@ -207,105 +207,105 @@ router.post('/:company_initial/sendMsg', wrapper(async(req, res, next) => {
   
   
   
-  // // 해당 이니셜과 api키에 매치되는 유효한 api키가 존재하는지 DB에서 체크하기
-  // const check_access_valid_result = connection.query(`
-  //   SELECT 
+  // 해당 이니셜과 api키에 매치되는 유효한 api키가 존재하는지 DB에서 체크하기
+  const check_access_valid_result = connection.query(`
+    SELECT 
     
-  //   \`akl\`.\`seq\` AS \`seq\`,
-  //   \`akl\`.\`api_key\` AS \`api_key\`,
-  //   \`akl\`.\`company_seq\` AS \`company_seq\`,
+    \`akl\`.\`seq\` AS \`seq\`,
+    \`akl\`.\`api_key\` AS \`api_key\`,
+    \`akl\`.\`company_seq\` AS \`company_seq\`,
     
-  //   \`cl\`.\`company_name\` AS \`company_name\`,
-  //   \`cl\`.\`company_initial\` AS \`company_initial\`,
+    \`cl\`.\`company_name\` AS \`company_name\`,
+    \`cl\`.\`company_initial\` AS \`company_initial\`,
     
-  //   \`akl\`.\`created_at\` AS \`created_at\`,
-  //   \`akl\`.\`allow_ip\` AS \`allow_ip\`,
-  //   \`akl\`.\`status\` AS \`status\` 
+    \`akl\`.\`created_at\` AS \`created_at\`,
+    \`akl\`.\`allow_ip\` AS \`allow_ip\`,
+    \`akl\`.\`status\` AS \`status\` 
     
-  //   FROM \`munjamoa\`.\`api_key_log\` AS \`akl\` 
+    FROM \`munjamoa\`.\`api_key_log\` AS \`akl\` 
     
-  //   LEFT JOIN \`munjamoa\`.\`company_list\` AS \`cl\` 
-  //   ON \`cl\`.\`seq\` = \`akl\`.\`company_seq\` 
+    LEFT JOIN \`munjamoa\`.\`company_list\` AS \`cl\` 
+    ON \`cl\`.\`seq\` = \`akl\`.\`company_seq\` 
     
-  //   WHERE \`akl\`.\`api_key\` = ? 
-  //   AND \`cl\`.\`company_initial\` = ? 
-  // `, [
-  //   api_key,
-  //   company_initial
-  // ]);
+    WHERE \`akl\`.\`api_key\` = ? 
+    AND \`cl\`.\`company_initial\` = ? 
+  `, [
+    api_key,
+    company_initial
+  ]);
   
   
-  // // 결과가 없으면 막기
-  // if (check_access_valid_result.length !== 1) {
-  //   // 유효한 API키가 아닌 경우
-  //   res.json({result:"fail", code:100201});
-  //   return;
-  // }
+  // 결과가 없으면 막기
+  if (check_access_valid_result.length !== 1) {
+    // 유효한 API키가 아닌 경우
+    res.json({result:"fail", code:100201});
+    return;
+  }
   
-  // if (check_access_valid_result[0].status != 1) {
-  //   // 결과는 있으나 status 값이 1이 아닌 경우
-  //   res.json({result:"fail", code:100202});
-  //   return;
-  // }
+  if (check_access_valid_result[0].status != 1) {
+    // 결과는 있으나 status 값이 1이 아닌 경우
+    res.json({result:"fail", code:100202});
+    return;
+  }
   
-  // let allow_ip = check_access_valid_result[0].allow_ip;
-  // let allow_ips = allow_ip.split(',');
+  let allow_ip = check_access_valid_result[0].allow_ip;
+  let allow_ips = allow_ip.split(',');
   
-  // // 허용 ip 수 만큼 반복문 돌기
-  // let is_allow_ip_match = false;
-  // for (let i=0; i<allow_ips.length; i++) {
-  //   let ip = allow_ips[i]; // ex) 154.22.333.25, 180.255.231.0/24
-  //   let ip_split = ip.split('.');
-  //   let check_ip = '';
+  // 허용 ip 수 만큼 반복문 돌기
+  let is_allow_ip_match = false;
+  for (let i=0; i<allow_ips.length; i++) {
+    let ip = allow_ips[i]; // ex) 154.22.333.25, 180.255.231.0/24
+    let ip_split = ip.split('.');
+    let check_ip = '';
 
-  //   if (ip == '0.0.0.0') {
-  //     is_allow_ip_match = true;
-  //     break;
-  //   }
+    if (ip == '0.0.0.0') {
+      is_allow_ip_match = true;
+      break;
+    }
     
-  //   if (ip.includes('/8')) {
-  //     check_ip = ip_split[0];
-  //     if (requestIP.getClientIp(req).includes(check_ip)) {
-  //       // 요청 ip가 허용 ip 규칙에 맞으면
-  //       is_allow_ip_match = true;
-  //       break;
-  //     }
-  //   } else if (ip.includes('/16')) {
-  //     check_ip = ip_split[0] + '.' + ip_split[1];
-  //     if (requestIP.getClientIp(req).includes(check_ip)) {
-  //       // 요청 ip가 허용 ip 규칙에 맞으면
-  //       is_allow_ip_match = true;
-  //       break;
-  //     }
-  //   } else if (ip.includes('/24')) {
-  //     check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2];
-  //     if (requestIP.getClientIp(req).includes(check_ip)) {
-  //       // 요청 ip가 허용 ip 규칙에 맞으면
-  //       is_allow_ip_match = true;
-  //       break;
-  //     }
-  //   } else if (ip.includes('/32')) {
-  //     check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3].split('/')[0];
-  //     if (requestIP.getClientIp(req).includes(check_ip)) {
-  //       // 요청 ip가 허용 ip 규칙에 맞으면
-  //       is_allow_ip_match = true;
-  //       break;
-  //     }
-  //   } else {
-  //     check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3];
-  //     if (requestIP.getClientIp(req).includes(check_ip)) {
-  //       // 요청 ip가 허용 ip 규칙에 맞으면
-  //       is_allow_ip_match = true;
-  //       break;
-  //     }
-  //   }
-  // }
+    if (ip.includes('/8')) {
+      check_ip = ip_split[0];
+      if (requestIP.getClientIp(req).includes(check_ip)) {
+        // 요청 ip가 허용 ip 규칙에 맞으면
+        is_allow_ip_match = true;
+        break;
+      }
+    } else if (ip.includes('/16')) {
+      check_ip = ip_split[0] + '.' + ip_split[1];
+      if (requestIP.getClientIp(req).includes(check_ip)) {
+        // 요청 ip가 허용 ip 규칙에 맞으면
+        is_allow_ip_match = true;
+        break;
+      }
+    } else if (ip.includes('/24')) {
+      check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2];
+      if (requestIP.getClientIp(req).includes(check_ip)) {
+        // 요청 ip가 허용 ip 규칙에 맞으면
+        is_allow_ip_match = true;
+        break;
+      }
+    } else if (ip.includes('/32')) {
+      check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3].split('/')[0];
+      if (requestIP.getClientIp(req).includes(check_ip)) {
+        // 요청 ip가 허용 ip 규칙에 맞으면
+        is_allow_ip_match = true;
+        break;
+      }
+    } else {
+      check_ip = ip_split[0] + '.' + ip_split[1] + '.' + ip_split[2] + '.' + ip_split[3];
+      if (requestIP.getClientIp(req).includes(check_ip)) {
+        // 요청 ip가 허용 ip 규칙에 맞으면
+        is_allow_ip_match = true;
+        break;
+      }
+    }
+  }
   
-  // // 요청 ip 주소가 허용 ip 주소에 포함되어 있지 않은 경우
-  // if (!is_allow_ip_match) {
-  //   res.json({result:"fail", code:100231});
-  //   return;
-  // }
+  // 요청 ip 주소가 허용 ip 주소에 포함되어 있지 않은 경우
+  if (!is_allow_ip_match) {
+    res.json({result:"fail", code:100231});
+    return;
+  }
   
   
   
